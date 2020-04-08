@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import torch
+
 
 def evaluate(ytrue,ypred):
 
@@ -13,6 +15,26 @@ def evaluate(ytrue,ypred):
     metrics['f1-score'] = [f1_score(ytrue,ypred,average='macro',zero_division=0)]
 
     return metrics
+
+def get_predictions(model,loader):
+    ypred = []
+    ytrue = []
+    gpu=True
+    for it, (seq, attn_masks, labels) in enumerate(loader):
+        #Clear gradients
+
+        labels = labels.type(torch.LongTensor)
+        if gpu:
+            seq, attn_masks, labels = seq.cuda(), attn_masks.cuda(), labels.cuda()
+        #Obtaining the logits from the model
+        logits_val,attentions = model(seq, attn_masks)
+        ypred.append(torch.argmax(logits_val,dim=1).cpu().numpy())
+        ytrue.append(labels.cpu().numpy())
+
+    ytrue = [item for sublist in ytrue for item in sublist]
+    ypred = [item for sublist in ypred for item in sublist]
+    
+    return ytrue,ypred
 
 def get_binary_metrics(ytrue,ypred):
 
