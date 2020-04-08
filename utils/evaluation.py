@@ -28,7 +28,7 @@ def get_binary_metrics(ytrue,ypred):
     return results
 
 
-def plot_confusion_matrix(ytrue,ypred,norm=False):
+def plot_confusion_matrix(ytrue,ypred,norm=False,label_map=None):
     #build confusion matrix
     plt.figure(figsize=(5,5))
     labels = np.unique(ytrue)
@@ -36,8 +36,13 @@ def plot_confusion_matrix(ytrue,ypred,norm=False):
     if norm:
         cm = np.round(cm/cm.sum(axis=0),3)
         cm = np.nan_to_num(cm)
+        fmt = '.2f'
+    else:
+        fmt = 'd'
+    if not label_map is None:
+        labels = [label_map[l] for l in labels]
     #plot
-    sns.heatmap(cm, xticklabels = labels, yticklabels = labels, annot = True, fmt='.2f', cmap="Reds", vmin = 0.2)
+    sns.heatmap(cm, xticklabels = labels, yticklabels = labels, annot = True, fmt=fmt, cmap="Reds", vmin = 0.2)
     plt.title('Confusion matrix')
     tick_marks = np.arange(len(labels))
     plt.xticks(tick_marks, labels, rotation=45)
