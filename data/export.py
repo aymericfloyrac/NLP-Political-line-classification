@@ -25,8 +25,10 @@ def get_tweet_and_name_2(line):
     c = 0
     m = 0
     rt = 0
-    for item in liste:
-        if 'RT @' not in liste[3][:20]:
+    if "{'created_at':" in liste[0]:
+            date = liste[0][len("{'created_at': "):]
+    if 'RT @' not in liste[3][:20]:
+        for item in liste:
             if "user':" in item:
                 c += 1
             if 'text\'' in item and t == 0:
@@ -39,7 +41,8 @@ def get_tweet_and_name_2(line):
             if 'name\'' in item and 'screen_name' not in item and m == 0:
                 m += 1
                 usermention_name =  item[len("name': "):]
-        if 'RT @' in liste[3][:20]:
+    if 'RT @' in liste[3][:20]:
+        for item in liste:
             if "user':" in item:
                 c += 1
             if 'text\'' in item and t == 0:
@@ -56,8 +59,8 @@ def get_tweet_and_name_2(line):
             if 'name\'' in item and 'screen_name' not in item and m == 0:
                 m += 1
                 usermention_name =  item[len("name': "):]
-    return tweet, personne, usermention_name, text
-
+    return tweet, personne, usermention_name, text, date
+	
 def clean_variables(liste):
     for i in range(len(liste)):
         liste[i] = liste[i][1:-1]
@@ -98,23 +101,24 @@ def clean_tweets(tweet):
     return tokenized_sentences
 
 
-
 def get_csv(data):
-
+    
     tweets = []
     names = []
     user_mention_name = []
     text = []
+    date = []
     for i in range(len(data)):
         try:
             tweets.append(get_tweet_and_name_2(data[i])[0])
             names.append(get_tweet_and_name_2(data[i])[1])
             user_mention_name.append(get_tweet_and_name_2(data[i])[2])
             text.append(get_tweet_and_name_2(data[i])[3])
+            date.append(get_tweet_and_name_2(data[i])[4])
         except:
             pass
 
-    df = pd.DataFrame({'nom': names,'tweet': tweets, 'user_nom': user_mention_name, 'texte': text})
+    df = pd.DataFrame({'nom': names,'tweet': tweets, 'user_nom': user_mention_name, 'texte': text, 'date': date})
     var_list = ['nom','user_nom','tweet','texte']
     for var in var_list:
         if var != 'tweet':
@@ -122,33 +126,34 @@ def get_csv(data):
                 df[var] = df[var].str.lower()
               #on enlève les accents
                 df[var] = df[var].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
-              #on enlève les ponctuations
+              #on enlève les ponctuations 
                 df[var] = df[var].str.replace('[^\w\s]','')
         if var == 'tweet':
             df[var] = df[var].str.lower()
         if var == 'texte':
             df[var] = df[var].str.lower()
 
-  #On garde les tweets des comptes officiels + les retweets
+  #On garde les tweets des comptes officiels + les retweets 
     liste_candidats = ['emmanuel macron','marine le pen','francois fillon','benoit hamon','jeanluc melenchon','n dupontaignan','nathalie arthaud','jacques cheminade','philippe poutou','francois asselineau','jean lassalle']
     liste_retweet_candidats = ['emmanuelmacron','mlp_officiel','francoisfillon','benoithamon','jlmelenchon','dupontaignan','n_arthaud','jcheminade','philippepoutou','upr_asselineau','jeanlassalle']
     to_keep = []
     for i in range(len(df)):
         if df['nom'][i] in liste_candidats:
             to_keep.append(i)
-        if df['user_nom'][i] in liste_candidats:
-            if 'rt @' in df['texte'][i]:
-                for item in liste_retweet_candidats:
-                    if 'rt @'+item in df['texte'][i][0:19]:
-                        to_keep.append(i)
-
+        for item in liste_candidats:
+            if df['user_nom'][i] == item:
+                if 'rt @' in df['texte'][i]:
+                    for item in liste_retweet_candidats:
+                        if 'rt @'+item in df['texte'][i][0:19]:
+                            to_keep.append(i)
+    
     df = df[df.index.isin(set(to_keep))].reset_index(drop=True)
-
+    
     liste_candidats = ['macron','pen','fillon','hamon','melenchon','dupontaignan','arthaud','cheminade','poutou','asselineau','lassalle']
     mention_col = ['cont_' + x for x in liste_candidats]
     for i in range(len(liste_candidats)):
         df[mention_col[i]] = dummy_mentionne_candidat(liste_candidats[i],'user_nom',df)
-
+  
     df["partie_politique_associe"] = "RAS"
     df["partie_politique_associe"][df.cont_macron == 1] = "la republique en marche"
     df["partie_politique_associe"][df.cont_pen== 1] = "front national"
@@ -179,7 +184,7 @@ def f(file):
 
 if __name__=='__main__':
 
-    liste_folder = ["24032020/","25032020/","26032020/","27032020/"]
+    liste_folder = ["24032020/","25032020/","26032020/","27032020/","01042020/","02042020/"]
     #version parallélisée
     for folder in liste_folder:
         print(folder)
@@ -191,7 +196,6 @@ if __name__=='__main__':
             p.map(f, [file for file in editFiles])
 
 
-    liste_folder = ["24032020/","25032020/","26032020/","27032020/"]
     for mycsvdir in liste_folder:
         csvfiles = glob.glob(os.path.join(path_output + mycsvdir, '*.csv'))
         dataframes = []

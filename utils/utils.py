@@ -50,5 +50,49 @@ def random_split_dataset(df,validation=True,deep=False):
     return Xtrain,ytrain,Xtest,ytest,label_map
 
 
-def time_split_dataset(df,validation=True):
-    return None
+def time_split_dataset(df,validation=True,deep=False):
+
+#convert labels
+    LE = LabelEncoder()
+    y = LE.fit_transform(df['couleur_politique'])
+    label_map = {i:label for i,label in enumerate(LE.classes_)}
+    df['label'] = y
+
+    dico_mois = {'Mar' : 3, 'Apr' : 4, 'May': 5}
+    df = df.replace({"mois": dico_mois})
+    df = df.sort_values(by=['mois', 'jour']).reset_index(drop = True)
+
+    #time split train test
+    df = df.reset_index(drop=True)
+    frontiere_tv = round(len(df[df['mois'] == 3]) + int(len(df[df['mois'] == 4])/2))
+    df = df[['tweet','label']]
+
+    dftrain, dftest = df.iloc[:frontiere_tv].reset_index(drop=True), df.iloc[frontiere_tv:].reset_index(drop=True)
+    ytrain,ytest = y[:frontiere_tv],y[frontiere_tv:]
+
+    #convert tweets
+    vectorizer = CountVectorizer()
+    Xtrain = vectorizer.fit_transform(dftrain['tweet'])
+    Xtest = vectorizer.transform(dftest['tweet'])
+
+    if validation:
+        frontiere_vt = round(Xtest.shape[0]/2)
+        Xval,Xtest = Xtest[:frontiere_vt],Xtest[frontiere_vt:]
+        yval,ytest = ytest[:frontiere_vt],ytest[frontiere_vt:]
+
+        if deep:
+            dfval = dftest.iloc[:frontiere_vt]
+            dftest = dftest.iloc[frontiere_vt:]
+            dftrain.reset_index(inplace=True,drop=True)
+            dfval.reset_index(inplace=True,drop=True)
+            dftest.reset_index(inplace=True,drop=True)
+            return dftrain,ytrain,dfval,yval,dftest,ytest,label_map
+
+        return Xtrain,ytrain,Xval,yval,Xtest,ytest,label_map
+
+    if deep:
+        dftrain.reset_index(inplace=True,drop=True)
+        dftest.reset_index(inplace=True,drop=True)
+        return dftrain,ytrain,dftest,ytest,label_map
+
+    return Xtrain,ytrain,Xtest,ytest,label_map
