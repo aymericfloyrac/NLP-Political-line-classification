@@ -25,9 +25,9 @@ def get_predictions(model,loader,model_type):
 
     for it, data in enumerate(loader):
         if model_type=='bert':
-            seq,attn_mask,labels = data
+            seq,attn_masks,labels = data
         elif model_type in ['rnn','cnn']:
-            seq,attn_mask,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
+            seq,attn_masks,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
         else:
             raise ValueError(f'Model type "{model_type}" not supported.')
 
@@ -37,7 +37,7 @@ def get_predictions(model,loader,model_type):
         #Obtaining the logits from the model
         if model_type == 'rnn':
             hidden = tuple([each.data for each in hidden])
-            out, val_h = model(seq, hidden)
+            out, hidden = model(seq, hidden)
         elif model_type == 'cnn':
             out = model(seq)
         elif model_type=='bert':
@@ -51,19 +51,6 @@ def get_predictions(model,loader,model_type):
     ypred = [item for sublist in ypred for item in sublist]
 
     return ytrue,ypred
-
-def get_binary_metrics(ytrue,ypred):
-
-    labels =  np.unique(ytrue)
-    results = pd.DataFrame([],columns = ['recall','precision','f1-score'],
-                            index = labels)
-    for l in labels:
-        ytrue_l = (ytrue==l).astype(int)
-        ypred_l = (ypred == l).astype(int)
-        results.loc[l] = [recall_score(ytrue_l,ypred_l),
-                          precision_score(ytrue_l,ypred_l,zero_division=0),
-                          f1_score(ytrue_l,ypred_l,zero_division=0)  ]
-    return results
 
 
 def plot_confusion_matrix(ytrue,ypred,norm=False,label_map=None):

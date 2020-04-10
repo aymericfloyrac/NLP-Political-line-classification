@@ -1,6 +1,8 @@
 from torch import nn
 from transformers import CamembertModel
 import matplotlib.pyplot as plt
+import torch
+import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -23,7 +25,7 @@ class RNN(nn.Module):
         embeds = self.embedding(x)
         lstm_out, hidden = self.lstm(embeds, hidden)
 
-        out = self.dropout(lstm_out)
+        out = self.dropout(lstm_out[:,-1,:])
         out = self.fc(out)
         out = self.sigmoid(out)
         out = out.view(batch_size, -1)
@@ -49,6 +51,7 @@ class CNN(nn.Module):
         self.fc1 = nn.Linear(num_filters*len(filter_sizes), 5)
 
     def forward(self, x):
+        x = x.long()
         x = self.embedding(x)
         x = x.unsqueeze(1)
         x = [F.relu(conv(x)).squeeze(3) for conv in self.convs1]
@@ -87,14 +90,14 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
         running_accuracy = 0
 
         if model_type=='rnn':
-            h = model.init_hidden(batch_size)
+            h = model.init_hidden(train_loader.batch_size)
 
         for it, data in enumerate(train_loader):
             #extract right info from data
             if model_type=='bert':
-                seq,attn_mask,labels = data
+                seq,attn_masks,labels = data
             elif model_type in ['rnn','cnn']:
-                seq,attn_mask,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
+                seq,attn_masks,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
             else:
                 raise ValueError(f'Model type "{model_type}" not supported.')
 
@@ -103,7 +106,7 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
             optimizer.zero_grad()
             #Converting these to cuda tensors
             if gpu:
-              seq, attn_masks, labels = seq.cuda(), attn_masks.cuda(), labels.cuda()
+              seq, attn_masks, labels = seq.to(device), attn_masks.to(device), labels.to(device)
             #Obtaining the logits from the model
             if model_type == 'rnn':
                 h = tuple([e.data for e in h])
@@ -146,15 +149,15 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
         accuracy_validation = 0
         #init hidden if rnn
         if model_type == 'rnn':
-            val_h = model.init_hidden(batch_size)
+            val_h = model.init_hidden(val_loader.batch_size)
 
         for it, data in enumerate(val_loader):
 
             #extract right info from data
             if model_type=='bert':
-                seq,attn_mask,labels = data
+                seq,attn_masks,labels = data
             elif model_type in ['rnn','cnn']:
-                seq,attn_mask,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
+                seq,attn_masks,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
             else:
                 raise ValueError(f'Model type "{model_type}" not supported.')
 
@@ -197,7 +200,7 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
     ax1.set_title('Evolution of training loss')
 
     ax2.plot(hist['accuracy'])
-    ax2.plot(val_hist('accuracy'))
+    ax2.plot(val_hist['accuracy'])
     ax2.set_title('Evolution of training accuracy')
 
     plt.tight_layout()

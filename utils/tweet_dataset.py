@@ -2,6 +2,10 @@ import torch
 from torch.utils.data import Dataset
 from transformers import BertTokenizer, AutoModel, AutoTokenizer
 import re
+from torch.nn.utils.rnn import pad_sequence
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
+from torch.utils.data import TensorDataset
 
 class TweetDatasetBERT(Dataset):
 
@@ -17,8 +21,8 @@ class TweetDatasetBERT(Dataset):
     def __getitem__(self, index):
 
         #Selecting the sentence and label at the specified index in the data frame
-        sentence = self.df.iloc[index, 'tweet']
-        label = self.df.iloc[index, 'label']
+        sentence = self.df['tweet'].iloc[index]
+        label = self.df['label'].iloc[index]
 
         #Preprocessing the text to be suitable for BERT
         tokens = self.tokenizer.tokenize(sentence) #Tokenize the sentence
@@ -46,18 +50,21 @@ class TweetDatasetBERT(Dataset):
         return tokens_ids_tensor, attn_mask, label
 
 
-def create_word_ix(df):
-    word_to_ix = {}
-    for sent in df['tweet']:
-        for word in re.findall(r"[\w']+|[.,!?;]", sent):
-            if word not in word_to_ix:
-                word_to_ix[word] = len(word_to_ix)
-    return word_to_ix
 
-def prepare_sequence(seq, to_ix):
-    idxs = [to_ix[w] if w in to_ix else len(to_ix) for w in seq]
-    idxs = torch.tensor(idxs, dtype=torch.long).unsqueeze(0)
-    return idxs
+def build_tweet_dataset(df,tokenizer = None):
+    if tokenizer is None:
+        n_most_common_words = 8000
+        tokenizer = Tokenizer(num_words=n_most_common_words, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~', lower=True)
+        tokenizer.fit_on_texts(df['tweet'].values)
+
+    max_len = 250
+    sequences = tokenizer.texts_to_sequences(df['tweet'].values)
+    word_index = tokenizer.word_index
+    X = pad_sequences(sequences, maxlen=max_len)
+    y = df['label'].values
+    data = TensorDataset(torch.from_numpy(X), torch.from_numpy(y))
+
+    return data,tokenizer
 
 
 class TweetDataset(Dataset):
@@ -72,39 +79,11 @@ class TweetDataset(Dataset):
     def __getitem__(self, index):
 
         #Selecting the sentence and label at the specified index in the data frame
-        sentence = self.df.iloc[index, 'tweet']
-        label = self.df.iloc[index, 'label']
+        sentence = self.df['tweet'].iloc[index]
+        label = self.df['label'].iloc[index]
         #split and isolate punctuation
         sent = re.findall(r"[\w']+|[.,!?;]", sentence)
-        idxs = prepare_sequence(sent,self.word_idx)
-
+        idxs = prepare_sequence(sent,self.word_ix)
+        idxs = pad_sequence(idxs,)
 
         return idxs,label
-
-		
-		
-class Prepa_CNN(Dataset):
-
-    def __init__(self,df, maxlen, n_most_common_words, batch_size):
-
-        self.df = df
-        self.n_most_common_words = n_most_common_words
-        self.tokenizer = Tokenizer(self.n_most_common_words, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~', lower=True)
-        self.maxlen = maxlen
-        self.batch_size = batch_size
-
-    def __len__(self):
-        return len(self.df)
-
-    def __getitem__(self, index):
-        
-        sentence = self.df.loc[index, 'tweet']
-        label = self.df.loc[index, 'label']
-        self.tokenizer.fit_on_texts(sentence)
-        sequences = self.tokenizer.texts_to_sequences(sentence)
-        word_index = self.tokenizer.word_index
-        X = pad_sequences(sequences, maxlen= self.maxlen)
-        data = TensorDataset(torch.from_numpy(X), torch.from_numpy(label))
-        loader = DataLoader(data, shuffle=True, batch_size = self.batch_size, drop_last=True)
-
-        return loader
