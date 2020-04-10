@@ -35,6 +35,29 @@ class RNN(nn.Module):
                       weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(device))
         return hidden
 
+class CNN(nn.Module):
+
+    def __init__(self, max_features, embed_size):
+        super(CNN, self).__init__()
+        filter_sizes = [1,2,3,5]
+        num_filters = 64
+        self.embedding = nn.Embedding(max_features, embed_size)
+        #self.embedding.weight = nn.Parameter(torch.tensor(embedding_matrix, dtype=torch.float32))
+        #self.embedding.weight.requires_grad = False
+        self.convs1 = nn.ModuleList([nn.Conv2d(1, num_filters, (K, embed_size)) for K in filter_sizes])
+        self.dropout = nn.Dropout(0.1)
+        self.fc1 = nn.Linear(num_filters*len(filter_sizes), 5)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        x = x.unsqueeze(1)
+        x = [F.relu(conv(x)).squeeze(3) for conv in self.convs1]
+        x = [F.max_pool1d(i, i.size(2)).squeeze(2) for i in x]
+        x = torch.cat(x, 1)
+        x = self.dropout(x)
+        l = self.fc1(x)
+        return l
+
 class CamembertClassifier(nn.Module):
 
     def __init__(self, pretrained_model_name='camembert-base'):
@@ -70,7 +93,7 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
             #extract right info from data
             if model_type=='bert':
                 seq,attn_mask,labels = data
-            elif model_type =='rnn':
+            elif model_type in ['rnn','cnn']:
                 seq,attn_mask,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
             else:
                 raise ValueError(f'Model type "{model_type}" not supported.')
@@ -85,6 +108,8 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
             if model_type == 'rnn':
                 h = tuple([e.data for e in h])
                 output,h = model(seq,h)
+            elif model_type == 'cnn':
+                output = model(seq)
             elif model_type =='bert':
                 output,attentions = model(seq, attn_masks)
             else:
@@ -128,18 +153,20 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
             #extract right info from data
             if model_type=='bert':
                 seq,attn_mask,labels = data
-            elif model_type =='rnn':
+            elif model_type in ['rnn','cnn']:
                 seq,attn_mask,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
             else:
                 raise ValueError(f'Model type "{model_type}" not supported.')
 
-            val_h = tuple([each.data for each in val_h])
             labels = labels.type(torch.LongTensor)
             if gpu:
               seq, attn_masks, labels = seq.cuda(), attn_masks.cuda(), labels.cuda()
             #Obtaining the logits from the model
-            if model_type =='rnn':
-                out, val_h = model(inp, val_h)
+            if model_type == 'rnn':
+                val_h = tuple([each.data for each in val_h])
+                out, val_h = model(seq, val_h)
+            elif model_type == 'cnn':
+                out = model(seq)
             elif model_type=='bert':
                 out, attentions_val = model(seq, attn_masks)
             else:

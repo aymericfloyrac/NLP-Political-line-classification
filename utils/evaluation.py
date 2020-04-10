@@ -16,24 +16,40 @@ def evaluate(ytrue,ypred):
 
     return metrics
 
-def get_predictions(model,loader):
+def get_predictions(model,loader,model_type):
     ypred = []
     ytrue = []
-    gpu=True
-    for it, (seq, attn_masks, labels) in enumerate(loader):
-        #Clear gradients
+    gpu = True
+    if model_type == 'rnn':
+        hidden = model.init_hidden(loader.batch_size)
+
+    for it, data in enumerate(loader):
+        if model_type=='bert':
+            seq,attn_mask,labels = data
+        elif model_type in ['rnn','cnn']:
+            seq,attn_mask,labels = data[0],torch.ones(1),data[1] #attn_mask is not important here
+        else:
+            raise ValueError(f'Model type "{model_type}" not supported.')
 
         labels = labels.type(torch.LongTensor)
         if gpu:
             seq, attn_masks, labels = seq.cuda(), attn_masks.cuda(), labels.cuda()
         #Obtaining the logits from the model
-        logits_val,attentions = model(seq, attn_masks)
-        ypred.append(torch.argmax(logits_val,dim=1).cpu().numpy())
+        if model_type == 'rnn':
+            hidden = tuple([each.data for each in hidden])
+            out, val_h = model(seq, hidden)
+        elif model_type == 'cnn':
+            out = model(seq)
+        elif model_type=='bert':
+            out, attentions_val = model(seq, attn_masks)
+        else:
+            raise ValueError(f'Model type "{model_type}" not supported.')
+        ypred.append(torch.argmax(out,dim=1).cpu().numpy())
         ytrue.append(labels.cpu().numpy())
 
     ytrue = [item for sublist in ytrue for item in sublist]
     ypred = [item for sublist in ypred for item in sublist]
-    
+
     return ytrue,ypred
 
 def get_binary_metrics(ytrue,ypred):

@@ -52,7 +52,7 @@ def random_split_dataset(df,validation=True,deep=False):
 
 def time_split_dataset(df,validation=True,deep=False):
 
-#convert labels
+    #convert labels
     LE = LabelEncoder()
     y = LE.fit_transform(df['couleur_politique'])
     label_map = {i:label for i,label in enumerate(LE.classes_)}
