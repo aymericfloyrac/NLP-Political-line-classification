@@ -16,10 +16,10 @@ def evaluate(ytrue,ypred):
 
     return metrics
 
-def get_predictions(model,loader,model_type):
+def get_predictions(model,loader,model_type,gpu = True):
+
     ypred = []
     ytrue = []
-    gpu = True
     if model_type == 'rnn':
         hidden = model.init_hidden(loader.batch_size)
 
