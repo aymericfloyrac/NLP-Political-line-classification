@@ -39,16 +39,12 @@ class RNN(nn.Module):
 
 class CNN(nn.Module):
 
-    def __init__(self, max_features, embed_size):
+    def __init__(self, max_features, embed_size,num_filters,filter_sizes):
         super(CNN, self).__init__()
-        filter_sizes = [1,2,3,5]
-        num_filters = 64
         self.embedding = nn.Embedding(max_features, embed_size)
-        #self.embedding.weight = nn.Parameter(torch.tensor(embedding_matrix, dtype=torch.float32))
-        #self.embedding.weight.requires_grad = False
-        self.convs1 = nn.ModuleList([nn.Conv2d(1, num_filters, (K, embed_size)) for K in filter_sizes])
+        self.convs1 = nn.ModuleList([nn.Conv2d(1, n, (K, embed_size)) for n,K in zip(num_filters,filter_sizes)])
         self.dropout = nn.Dropout(0.1)
-        self.fc1 = nn.Linear(num_filters*len(filter_sizes), 5)
+        self.fc1 = nn.Linear(num_filters[-1]*len(filter_sizes), 5)
 
     def forward(self, x):
         x = x.long()
