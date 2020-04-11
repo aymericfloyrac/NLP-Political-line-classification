@@ -96,3 +96,12 @@ def time_split_dataset(df,validation=True,deep=False):
         return dftrain,ytrain,dftest,ytest,label_map
 
     return Xtrain,ytrain,Xtest,ytest,label_map
+
+	
+def grid_search_classifier(clf,params):
+    parameters = params
+    acc_scorer = make_scorer(accuracy_score)
+    grid_obj = GridSearchCV(clf, parameters, scoring=acc_scorer)
+    grid_obj = grid_obj.fit(Xtrain, ytrain)
+    clf = grid_obj.best_estimator_
+    return clf
