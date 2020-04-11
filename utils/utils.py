@@ -1,6 +1,8 @@
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import make_scorer, accuracy_score
+from sklearn.model_selection import GridSearchCV
 
 def random_split_dataset(df,validation=True,deep=False):
 
