@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class RNN(nn.Module):
     def __init__(self, vocab_size, output_size, embedding_dim, hidden_dim, n_layers, drop_prob=0.5):
@@ -32,6 +31,7 @@ class RNN(nn.Module):
         return out, hidden
 
     def init_hidden(self, batch_size):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         weight = next(self.parameters()).data
         hidden = (weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(device),
                       weight.new(self.n_layers, batch_size, self.hidden_dim).zero_().to(device))
@@ -79,7 +79,7 @@ class CamembertClassifier(nn.Module):
 def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_loader,
           n_epochs=1, gpu=False, print_every=1,print_validation_every=1):
 
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
     #for plotting
@@ -163,7 +163,7 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
 
             labels = labels.type(torch.LongTensor)
             if gpu:
-              seq, attn_masks, labels = seq.cuda(), attn_masks.cuda(), labels.cuda()
+              seq, attn_masks, labels = seq.to(device), attn_masks.to(device), labels.to(device)
             #Obtaining the logits from the model
             if model_type == 'rnn':
                 val_h = tuple([each.data for each in val_h])
@@ -179,9 +179,7 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
             #Computing loss
             _loss = float(criterion(out.squeeze(-1), labels))
             #computing scores
-            ypred = torch.argmax(out,dim=1).cpu().numpy()
-            ytrue = labels.cpu().numpy()
-            _accu = torch.sum(torch.argmax(output,dim=1)==labels)/float(labels.size(0))
+            _accu = torch.sum(torch.argmax(out,dim=1)==labels)/float(labels.size(0))
             loss_validation += _loss
             accuracy_validation += _accu
         #validation printing
@@ -195,13 +193,15 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
 
     #plot history
     fig,(ax1,ax2) = plt.subplots(1,2,figsize=(14,5))
-    ax1.plot(hist['loss'])
-    ax1.plot(val_hist['loss'])
+    ax1.plot(hist['loss'],label='train')
+    ax1.plot(val_hist['loss'],label='validation')
     ax1.set_title('Evolution of training loss')
+    ax1.legend()
 
-    ax2.plot(hist['accuracy'])
-    ax2.plot(val_hist['accuracy'])
+    ax2.plot(hist['accuracy'],label='train')
+    ax2.plot(val_hist['accuracy'],label='validation')
     ax2.set_title('Evolution of training accuracy')
+    ax2.legend()
 
     plt.tight_layout()
     plt.show()
