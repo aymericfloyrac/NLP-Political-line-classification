@@ -3,7 +3,7 @@ from transformers import CamembertModel
 import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
-
+from utils.pytorchtools import EarlyStopping
 
 class RNN(nn.Module):
     def __init__(self, vocab_size, output_size, embedding_dim, hidden_dim, n_layers, drop_prob=0.5):
@@ -76,11 +76,15 @@ class CamembertClassifier(nn.Module):
         return logits,attentions
 
 
-def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_loader,
-          n_epochs=1, gpu=False, print_every=1,print_validation_every=1):
+def train(model, model_type,criterion, optimizer, activate_early_stopping,scheduler,
+          train_loader, val_loader,
+          n_epochs=1, gpu=False, print_every=1,print_validation_every=1,
+          earl_stopping_patience = 3):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
+    if activate_early_stopping:
+        early_stopping = EarlyStopping(patience = earl_stopping_patience, verbose=True)
 
     #for plotting
     hist = {'loss':[],'accuracy':[]}
@@ -188,7 +192,12 @@ def train(model, model_type,criterion, optimizer, scheduler,train_loader, val_lo
 
         val_hist['loss'].append(loss_validation/n_batch_validation)
         val_hist['accuracy'].append(accuracy_validation/n_batch_validation)
-
+        #early stopping
+        if activate_early_stopping:
+            early_stopping(loss_validation, model)
+            if early_stopping.early_stop:
+                print("Early stopping")
+                break
         model.train()
 
     #plot history
