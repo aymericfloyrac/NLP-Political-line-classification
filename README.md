@@ -11,6 +11,6 @@ This repository contains:
 - a folder ```data``` which contains the data cleaning scripts and the hyperparameters for our models,
 - a folder ```utils``` which contains useful scripts,
 - a script ```classifiers.py```which contains the deep learning models architecture,
-- a notebook ```Project.ipynd``` which displays our approach and the results. It is entirely runnable from Google Colab (instructions in the notebook).
+- a notebook ```Project.ipynb``` which displays our approach and the results. It is entirely runnable from Google Colab (instructions in the notebook).
 
 
