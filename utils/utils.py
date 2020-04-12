@@ -60,14 +60,13 @@ def time_split_dataset(df,validation=True,deep=False):
     Output : training set, validation set and test set"""
     #convert labels
     LE = LabelEncoder()
-    y = LE.fit_transform(df['couleur_politique'])
+    df['label'] = LE.fit_transform(df['couleur_politique'])
     label_map = {i:label for i,label in enumerate(LE.classes_)}
-    df['label'] = y
-
     dico_mois = {'Mar' : 3, 'Apr' : 4, 'May': 5}
     df = df.replace({"mois": dico_mois})
     df = df.sort_values(by=['mois', 'jour']).reset_index(drop = True)
 
+    y = df['label'].values
     #time split train test
     df = df.reset_index(drop=True)
     frontiere_tv = round(len(df[df['mois'] == 3]) + int(len(df[df['mois'] == 4])/2))
@@ -103,7 +102,6 @@ def time_split_dataset(df,validation=True,deep=False):
 
     return Xtrain,ytrain,Xtest,ytest,label_map
 
-	
 def grid_search_classifier(clf,params):
     """Function to apply gridsearch for ML models
     Input : clf = classifier, params = dict parameters space used for grid search

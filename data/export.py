@@ -66,7 +66,7 @@ def get_tweet_and_name_2(line):
                 m += 1
                 usermention_name =  item[len("name': "):]
     return tweet, personne, usermention_name, text, date
-	
+
 def clean_variables(liste):
     """Function to clean a list
     Input : list
@@ -161,14 +161,14 @@ def get_csv(data):
                     for item in liste_retweet_candidats:
                         if 'rt @'+item in df['texte'][i][0:19]:
                             to_keep.append(i)
-    
+
     df = df[df.index.isin(set(to_keep))].reset_index(drop=True)
-    
+
     liste_candidats = ['macron','pen','fillon','hamon','melenchon','dupontaignan','arthaud','cheminade','poutou','asselineau','lassalle']
     mention_col = ['cont_' + x for x in liste_candidats]
     for i in range(len(liste_candidats)):
         df[mention_col[i]] = dummy_mentionne_candidat(liste_candidats[i],'user_nom',df)
-  
+
     df["partie_politique_associe"] = "RAS"
     df["partie_politique_associe"][df.cont_macron == 1] = "la republique en marche"
     df["partie_politique_associe"][df.cont_pen== 1] = "front national"
