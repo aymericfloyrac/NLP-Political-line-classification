@@ -8,9 +8,9 @@ The data used can be found [here](https://dataverse.harvard.edu/dataset.xhtml?pe
 ## Content
 This repository contains: 
 
-- a folder ```data``` which contains the data cleaning scripts and the hyperparameters for our models,
-- a folder ```utils``` which contains useful scripts,
-- a script ```classifiers.py```which contains the deep learning models architecture,
-- a notebook ```Project.ipynb``` which displays our approach and the results. It is entirely runnable from Google Colab (instructions in the notebook).
+- a folder [data](data) which contains the data cleaning scripts and the hyperparameters for our models,
+- a folder [utils](utils) which contains useful scripts,
+- a script [classifiers](classifiers.py) which contains the deep learning models architecture,
+- a notebook [Project](Project.ipynb) which displays our approach and the results. It is entirely runnable from Google Colab (instructions in the notebook).
 
 
