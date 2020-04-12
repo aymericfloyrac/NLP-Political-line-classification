@@ -8,7 +8,7 @@ from keras.preprocessing.sequence import pad_sequences
 from torch.utils.data import TensorDataset
 
 class TweetDatasetBERT(Dataset):
-
+    """Function to build dataset for Camembert model"""
     def __init__(self, df, maxlen, model_name='camembert-base'):
 
         self.df = df
@@ -52,6 +52,7 @@ class TweetDatasetBERT(Dataset):
 
 
 def build_tweet_dataset(df,tokenizer = None):
+    """Function to build dataset for LSTM and CNN models"""
     if tokenizer is None:
         n_most_common_words = 8000
         tokenizer = Tokenizer(num_words=n_most_common_words, filters='!"#$%&()*+,-./:;<=>?@[\]^_`{|}~', lower=True)

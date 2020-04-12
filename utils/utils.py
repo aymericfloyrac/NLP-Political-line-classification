@@ -5,7 +5,9 @@ from sklearn.metrics import make_scorer, accuracy_score
 from sklearn.model_selection import GridSearchCV
 
 def random_split_dataset(df,validation=True,deep=False):
-
+    """Function to split train/validation/test set in a random way
+    Input : df = dataframe, validation = Boolean and return validation set if True, deep = boolean and return sets for deep learning models if True
+    Output : training set, validation set and test set"""
     if validation:
         test_prop = 0.4
     else:
@@ -53,7 +55,9 @@ def random_split_dataset(df,validation=True,deep=False):
 
 
 def time_split_dataset(df,validation=True,deep=False):
-
+    """Function to split train/validation/test set in a time way
+    Input : df = dataframe, validation = Boolean and return validation set if True, deep = boolean and return sets for deep learning models if True
+    Output : training set, validation set and test set"""
     #convert labels
     LE = LabelEncoder()
     y = LE.fit_transform(df['couleur_politique'])
@@ -101,6 +105,9 @@ def time_split_dataset(df,validation=True,deep=False):
 
 	
 def grid_search_classifier(clf,params):
+    """Function to apply gridsearch for ML models
+    Input : clf = classifier, params = dict parameters space used for grid search
+    Output : clf = optimized classifier"""
     parameters = params
     acc_scorer = make_scorer(accuracy_score)
     grid_obj = GridSearchCV(clf, parameters, scoring=acc_scorer)

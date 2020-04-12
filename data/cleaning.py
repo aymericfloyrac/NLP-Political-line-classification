@@ -16,22 +16,27 @@ import glob
 
 
 def remove_hashtags(tokens):
+    """Function to remove hashtags in text"""
     tokens = map(lambda x: x.replace('#', ''), tokens)
     return list(tokens)
 
 def remove_url(tokens):
+    """Function to remove URL in text"""
     tokens = filter(lambda x: "http" not in x, tokens)
     return list(tokens)
 
 def remove_html(tokens):
+    """Function to remove html in text"""
     tokens = filter(lambda x: x[0]+x[-1] != '<>', tokens)
     return list(tokens)
 
 def remove_emoji(tokens):
+    """Function to remove emoji in text"""
     tokens = [emoji.get_emoji_regexp().sub(u'', ''.join(tokens))]
     return tokens
 
 def clean_tweets(tweet, keep_emoji):
+    """Function to clean text of tweet"""
     tokenizer = TweetTokenizer()
     tokenized_sentences = []
     tokens = tokenizer.tokenize(tweet)
@@ -52,6 +57,7 @@ def clean_tweets(tweet, keep_emoji):
         return tokenized_sentences
 
 def clean_tweet_ML(df):
+    """Function to finish to clean tweet"""
     for i in range(len(df)):
         try:
             df['tweet'][i] = df['tweet'][i].split(':')[1]
@@ -60,18 +66,16 @@ def clean_tweet_ML(df):
     var_list = ['tweet']
     for var in var_list:
         if var != 'tweet':
-            #lower
             df[var] = df[var].str.lower()
-            #on enlève les accents
             df[var] = df[var].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
-            #on enlève les ponctuations
             df[var] = df[var].str.replace('[^\w\s]','')
     return df
 
 def normalise_text(text):
-    text = text.str.lower() # lowercase
-    text = text.str.replace(r"\#","") # replaces hashtags
-    text = text.str.replace(r"http\S+","URL")  # remove URL addresses
+    """Function to clear text of tweet"""
+    text = text.str.lower() 
+    text = text.str.replace(r"\#","")
+    text = text.str.replace(r"http\S+","URL") 
     text = text.str.replace(r"@","")
     #text = text.str.replace(r"[^A-Za-z0-9()!?\'\`\"]", " ")
     text = text.str.replace("\s{2,}", " ")

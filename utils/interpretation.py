@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def get_last_layer_attention(model,tokenizer,sample):
+    """Function to select attention layer of model
+    Input : model = model to focus on, tokenizer = used tokenizer for training, sample = sentence to focus on
+    Output : mean_attn = mean attention of last layer, tokens = tokens, attn_data = attention of last layer"""
     seq,attn_mask,label = sample
     seq = seq.view(1,-1).cuda()
     attn_mask = attn_mask.view(1,-1).cuda()
@@ -20,12 +23,15 @@ def get_last_layer_attention(model,tokenizer,sample):
 
 
 def visualize_layer_attention(layer_attn):
+    """Function to display attention layer
+    Input : attention layer"""
     fig = plt.figure(figsize=(14,5))
     for i in range(12):
         ax = fig.add_subplot(2,6,i+1)
         ax.imshow(layer_attn[i])
 
 def get_words_level_attentions(tokens,array,tokenizer):
+    """Function to get attention at words level """
     mask = np.array([t not in ['<s>','<pad>','</s>'] for t in tokens])
     tokens = np.asarray(tokens)[mask]
     array = array[mask]
@@ -43,7 +49,8 @@ def get_words_level_attentions(tokens,array,tokenizer):
     return np.array(attentions), words
 
 def display_attention(tokens,array,tokenizer):
-
+    """Function to display attention layer of model at words level
+    Input : tokens = tokens, array = mean attention of last layer, tokenizer = used tokenizer"""
     attention, words = get_words_level_attentions(tokens,array,tokenizer)
     #define cmap and normalize array
     cmap = matplotlib.cm.get_cmap('Reds')

@@ -16,9 +16,15 @@ import glob
 
 
 def get_list(line):
+    """Function to get a list from row data
+    Input : long string
+    Output : list"""
     return list(line.split(", \'"))
 
 def get_tweet_and_name_2(line):
+    """Function to get a list from row data
+    Input : list
+    Output : tweet, name of account,name of usermention_name, text tweet, date of tweet"""
     liste = get_list(line)
     t = 0
     n = 0
@@ -62,31 +68,41 @@ def get_tweet_and_name_2(line):
     return tweet, personne, usermention_name, text, date
 	
 def clean_variables(liste):
+    """Function to clean a list
+    Input : list
+    Output : cleaned list"""
     for i in range(len(liste)):
         liste[i] = liste[i][1:-1]
     return liste
 
 def dummy_mentionne_candidat(candidat,var,data):
+    """Function to create dummy variable for each candidate
+    Input : candidat = name of candidate, var = variable, data = dataframe"""
     cont = [int(candidat in x) for x in list(data[var].str.split(" "))]
     return cont
 
 def remove_hashtags(tokens):
+    """Function to remove hashtags"""
     tokens = map(lambda x: x.replace('#', ''), tokens)
     return list(tokens)
 
 def remove_url(tokens):
+    """Function to remove URL"""
     tokens = filter(lambda x: "http" not in x, tokens)
     return list(tokens)
 
 def remove_html(tokens):
+    """Function to remove HTML"""
     tokens = filter(lambda x: x[0]+x[-1] != '<>', tokens)
     return list(tokens)
 
 def remove_emoji(tokens):
+    """Function to remove EMOJI"""
     tokens = [emoji.get_emoji_regexp().sub(u'', ''.join(tokens))]
     return tokens
 
 def clean_tweets(tweet):
+    """Function to clean raw tweet"""
     tokenizer = TweetTokenizer()
     tokenized_sentences = []
     tokens = tokenizer.tokenize(tweet)
@@ -102,7 +118,9 @@ def clean_tweets(tweet):
 
 
 def get_csv(data):
-    
+    """Function to get a clean csv from row data
+    Input : file.txt
+    Output : df_new.csv"""
     tweets = []
     names = []
     user_mention_name = []
@@ -124,16 +142,13 @@ def get_csv(data):
         if var != 'tweet':
             if var != 'texte':
                 df[var] = df[var].str.lower()
-              #on enlève les accents
                 df[var] = df[var].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
-              #on enlève les ponctuations 
                 df[var] = df[var].str.replace('[^\w\s]','')
         if var == 'tweet':
             df[var] = df[var].str.lower()
         if var == 'texte':
             df[var] = df[var].str.lower()
 
-  #On garde les tweets des comptes officiels + les retweets 
     liste_candidats = ['emmanuel macron','marine le pen','francois fillon','benoit hamon','jeanluc melenchon','n dupontaignan','nathalie arthaud','jacques cheminade','philippe poutou','francois asselineau','jean lassalle']
     liste_retweet_candidats = ['emmanuelmacron','mlp_officiel','francoisfillon','benoithamon','jlmelenchon','dupontaignan','n_arthaud','jcheminade','philippepoutou','upr_asselineau','jeanlassalle']
     to_keep = []

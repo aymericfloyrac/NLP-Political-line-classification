@@ -7,7 +7,9 @@ import torch
 
 
 def evaluate(ytrue,ypred):
-
+    """Function to evaluate a model 4 metrics
+    Input : ytrue = array with true labels, ypred = array with predicts of model
+    Output : dataframe with accuracy, recall, precision and f1-score"""
     metrics = pd.DataFrame([],columns=['accuracy','recall','precision','f1-score'])
     metrics['accuracy'] = [accuracy_score(ytrue,ypred)]
     metrics['recall'] = [recall_score(ytrue,ypred,average='macro')]
@@ -17,7 +19,9 @@ def evaluate(ytrue,ypred):
     return metrics
 
 def get_predictions(model,loader,model_type,gpu = True):
-
+    """Function to get predictions from model
+    Input : model = model to use for predictions, loader = data associated to the model, model_type = sort of model used
+    Output : ytrue = array of true labels, ypred = array of predicted labels"""
     ypred = []
     ytrue = []
     if model_type == 'rnn':
@@ -54,6 +58,8 @@ def get_predictions(model,loader,model_type,gpu = True):
 
 
 def plot_confusion_matrix(ytrue,ypred,norm=False,label_map=None):
+    """Function to get confusion matrix
+    Input : ytrue = true labels, ypred = predicted labels, norm = option to display normalised values, label_map = display names of labels"""
     #build confusion matrix
     plt.figure(figsize=(5,5))
     labels = np.unique(ytrue)

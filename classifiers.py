@@ -6,7 +6,11 @@ import torch.nn.functional as F
 from utils.pytorchtools import EarlyStopping
 
 class RNN(nn.Module):
+    """Class to build RNN model"""
     def __init__(self, vocab_size, output_size, embedding_dim, hidden_dim, n_layers, drop_prob=0.5):
+        """Initialization of RNN model
+        Input : vocab_size = (integer) size of vocabulary, output_size = (integer) size of output, embedding_dim = (integer) dimension of embeddings,
+        hidden_dim = (integer) dimension of hidden units, n_layers = (integer) number of layers, drop_prob = (integer) probability of drop"""
         super(RNN, self).__init__()
         self.output_size = output_size
         self.n_layers = n_layers
@@ -38,8 +42,11 @@ class RNN(nn.Module):
         return hidden
 
 class CNN(nn.Module):
-
+    """Class to build CNN model"""
     def __init__(self, max_features, embed_size,num_filters,filter_sizes):
+        """Initialization of RNN model
+        Input : max_features = (integer) number of max features, embed_size = (integer) size of embeddings, num_filters = (list of integers) number of filters,
+        filter_sizes = (list of integers) size of filters"""
         super(CNN, self).__init__()
         self.embedding = nn.Embedding(max_features, embed_size)
         self.convs1 = nn.ModuleList([nn.Conv2d(1, n, (K, embed_size)) for n,K in zip(num_filters,filter_sizes)])
@@ -58,7 +65,7 @@ class CNN(nn.Module):
         return l
 
 class CamembertClassifier(nn.Module):
-
+    """Class to build Camembert model"""
     def __init__(self, pretrained_model_name='camembert-base'):
         super(CamembertClassifier, self).__init__()
         self.encoder = CamembertModel.from_pretrained(pretrained_model_name,output_attentions=True)
@@ -76,7 +83,12 @@ def train(model, model_type,criterion, optimizer, activate_early_stopping,schedu
           train_loader, val_loader,
           n_epochs=1, gpu=False, print_every=1,print_validation_every=1,
           earl_stopping_patience = 3):
-
+    """Function to train deep learning model
+    Input : model = model to train, model_type = (string) name of model type, criterion =  loss function to use for training, optimizer = optimizer to use for training, 
+    activate_early_stopping = (boolean) active early stop if True, scheduler = scheduler to use for training, train_loader = (DataLoader) train set, val_loader = (DataLoader) validation set,
+    n_epochs = (integer) number of epochs, gpu = (boolean) use GPU if True, print_every = (integer) periodicity for printing training loss and accuracy, 
+    print_validation_every = (integer) periodicity for printing validation loss and accuracy, earl_stopping_patience = (integer) number of epochs that produced the monitored quantity 
+    with no improvement after which training will be stopped """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     if activate_early_stopping:
